@@ -6,6 +6,8 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   providers: [
     Credentials({
       name: "Credentials",
@@ -15,6 +17,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
+          console.log("Missing credentials");
           return null;
         }
 
@@ -22,6 +25,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const password = credentials.password as string;
 
         try {
+          console.log("Attempting login for:", username);
+          
           const [user] = await db
             .select()
             .from(users)
@@ -29,15 +34,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             .limit(1);
 
           if (!user) {
+            console.log("User not found:", username);
             return null;
           }
 
+          console.log("User found, checking password...");
           const isPasswordValid = await compare(password, user.passwordHash);
 
           if (!isPasswordValid) {
+            console.log("Invalid password for:", username);
             return null;
           }
 
+          console.log("Login successful for:", username);
           return {
             id: String(user.id),
             name: user.name || user.username,
