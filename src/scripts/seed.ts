@@ -1,6 +1,13 @@
-import { db } from "@/lib/db";
+import * as dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import { users, vehicleTypes, sectors, fuelContainers } from "@/lib/db/schema";
 import bcrypt from "bcryptjs";
+
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle(sql);
 
 async function seed() {
   console.log("🌱 Započinjem seeding...");
